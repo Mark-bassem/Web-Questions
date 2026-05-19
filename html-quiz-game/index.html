@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Quiz HTML & CSS — Score & Leaderboard</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <h1>Quiz HTML & CSS</h1>
+      <p class="sub">حل الأسئلة واحصل على أعلى سكـور وادخل للـ Leaderboard</p>
+    </div>
+    <div class="meta">
+      <div class="pill">الدرجة: <span id="score">0</span></div>
+      <div class="pill">السؤال: <span id="qIndex">1</span>/<span id="qTotal">0</span></div>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Intro -->
+    <section id="screen-intro" class="card">
+      <h2>ابدأ المنافسة</h2>
+      <p class="hint">اكتب اسمك ثم اضغط “ابدأ” — سيتم حفظ أفضل نتيجة لك محليًا على جهازك.</p>
+
+      <label class="field">
+        <span>اسم اللاعب</span>
+        <input id="playerName" type="text" maxlength="24" placeholder="مثال: أحمد" autocomplete="nickname" />
+      </label>
+
+      <div class="row">
+        <button id="btn-start" class="btn primary">ابدأ</button>
+        <button id="btn-show-leader" class="btn">عرض Leaderboard</button>
+      </div>
+    </section>
+
+    <!-- Quiz -->
+    <section id="screen-quiz" class="card hidden">
+      <div class="quiz-header">
+        <div class="timer">
+          <span>الوقت المتبقي:</span>
+          <strong id="timer">—</strong>
+        </div>
+        <div class="progress">
+          <div class="bar">
+            <div id="progressBar" class="fill" style="width:0%"></div>
+          </div>
+        </div>
+      </div>
+
+      <h2 id="questionText" class="question"></h2>
+      <div id="answers" class="answers"></div>
+
+      <div class="feedback hidden" id="feedbackBox"></div>
+
+      <div class="row end">
+        <button id="btn-submit" class="btn primary">تسليم</button>
+        <button id="btn-next" class="btn hidden">التالي</button>
+      </div>
+    </section>
+
+    <!-- Result -->
+    <section id="screen-result" class="card hidden">
+      <h2>انتهت اللعبة ✅</h2>
+      <p class="big">سكورك النهائي: <span id="finalScore" class="accent">0</span></p>
+
+      <div class="row">
+        <div class="stat">
+          <div class="k">عدد الإجابات الصحيحة</div>
+          <div class="v"><span id="correctCount">0</span></div>
+        </div>
+        <div class="stat">
+          <div class="k">عدد الأسئلة</div>
+          <div class="v"><span id="totalCount">0</span></div>
+        </div>
+      </div>
+
+      <div class="row">
+        <button id="btn-save" class="btn primary">حفظ في Leaderboard</button>
+        <button id="btn-retry" class="btn">لعب مرة أخرى</button>
+      </div>
+    </section>
+
+    <!-- Leaderboard -->
+    <section id="screen-leader" class="card hidden">
+      <h2>🏆 Leaderboard</h2>
+      <p class="hint">يتم ترتيب النتائج من الأعلى للأدنى ويتم حفظها عبر localStorage.</p>
+
+      <div class="table-wrap">
+        <table class="table" aria-label="Leaderboard">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>الاسم</th>
+              <th>السكور</th>
+            </tr>
+          </thead>
+          <tbody id="leaderBody"></tbody>
+        </table>
+      </div>
+
+      <div class="row">
+        <button id="btn-back" class="btn">رجوع</button>
+        <button id="btn-continue-quiz" class="btn primary">ابدأ من جديد</button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span>© Quiz HTML & CSS</span>
+  </footer>
+
+  <script>
+    // Inline for simplicity: quiz data is kept here
+    // NOTE: Questions are deduplicated (no exact duplicates), and only one instance is included.
+    window.QUIZ_DATA = [
+      // HTML (alternating with CSS)
+      {
+        q: "Which of the following is a semantic HTML element?",
+        options: ["<b>", "<section>", "<i>", "<font>"],
+        answerIndex: 1,
+        type: "html"
+      },
+      {
+        q: "What does HTML stand for?",
+        options: ["Hyper Text Markup Language", "High Level Text Markup Language", "Hyper Transfer Markup Language", "Home Tool Markup Language"],
+        answerIndex: 0,
+        type: "css"
+      },
+      {
+        q: "Which tag is used to create a paragraph in HTML?",
+        options: ["<h1>", "<p>", "<div>", "<span>"],
+        answerIndex: 1,
+        type: "html"
+      },
+      {
+        q: "Which CSS property changes the text color of an element?",
+        options: ["text-color", "background-color", "color", "font-color"],
+        answerIndex: 2,
+        type: "css"
+      },
+      {
+        q: "Which tag defines the main heading in HTML?",
+        options: ["<h6>", "<heading>", "<h1>", "<head>"],
+        answerIndex: 2,
+        type: "html"
+      },
+      {
+        q: "Which CSS property controls the font size of text?",
+        options: ["text-size", "font-style", "font-size", "size"],
+        answerIndex: 2,
+        type: "css"
+      },
+      {
+        q: "Which of the following is a self-closing tag in HTML?",
+        options: ["<p>", "<div>", "<img>", "<h1>"],
+        answerIndex: 2,
+        type: "html"
+      },
+      {
+        q: "Which HTML attribute provides alternative text for an image?",
+        options: ["src", "href", "alt", "title"],
+        answerIndex: 2,
+        type: "css"
+      },
+
+      {
+        q: "Which tag is used to create an unordered list?",
+        options: ["<ol>", "<li>", "<ul>", "<list>"],
+        answerIndex: 2,
+        type: "html"
+      },
+      {
+        q: "Which CSS property is used to change the background color of an element?",
+        options: ["color", "bgcolor", "background-color", "background"],
+        answerIndex: 2,
+        type: "css"
+      },
+
+      {
+        q: "Which tag is used to create a hyperlink in HTML?",
+        options: ["<link>", "<a>", "<href>", "<url>"],
+        answerIndex: 1,
+        type: "html"
+      },
+      {
+        q: "Which CSS property is used to align text to the center?",
+        options: ["text-align: center", "align: center", "text-center", "center-align"],
+        answerIndex: 0,
+        type: "css"
+      },
+
+      {
+        q: "What does the target=\"_blank\" attribute do in a link?",
+        options: ["Opens the link in the same tab", "Opens the link in a new tab", "Closes the current tab", "Opens the link in a frame"],
+        answerIndex: 1,
+        type: "html"
+      },
+      {
+        q: "Which CSS property adds space between the element border and its content?",
+        options: ["margin", "padding", "spacing", "border-space"],
+        answerIndex: 1,
+        type: "css"
+      },
+
+      {
+        q: "Which tag is used to display an image in HTML?",
+        options: ["<pic>", "<image>", "<img>", "<src>"],
+        answerIndex: 2,
+        type: "html"
+      },
+      {
+        q: "Which CSS property is used to make text bold?",
+        options: ["font-style: bold", "font-weight: bold", "text-bold", "bold"],
+        answerIndex: 1,
+        type: "css"
+      },
+
+      {
+        q: "Which HTML element is used to define the structure of a table?",
+        options: ["<table>", "<tr>", "<td>", "All of the above"],
+        answerIndex: 3,
+        type: "html"
+      },
+      {
+        q: "Which CSS property adds space outside an element?",
+        options: ["padding", "margin", "border", "spacing"],
+        answerIndex: 1,
+        type: "css"
+      },
+
+      {
+        q: "Which tag defines a table row in HTML?",
+        options: ["<td>", "<th>", "<tr>", "<table>"],
+        answerIndex: 2,
+        type: "html"
+      },
+      {
+        q: "Which CSS property changes the font family of text?",
+        options: ["font-family", "font-style", "font-type", "text-font"],
+        answerIndex: 0,
+        type: "css"
+      },
+
+      {
+        q: "Which tag is used to create a form in HTML?",
+        options: ["<input>", "<form>", "<fieldset>", "<button>"],
+        answerIndex: 1,
+        type: "html"
+      },
+      {
+        q: "Which CSS property adds a border around an element?",
+        options: ["border", "outline", "frame", "edge"],
+        answerIndex: 0,
+        type: "css"
+      },
+
+      {
+        q: "Which input type is used for email addresses in HTML forms?",
+        options: ["text", "password", "email", "number"],
+        answerIndex: 2,
+        type: "html"
+      },
+      {
+        q: "Which CSS property is used to set the background image of an element?",
+        options: ["background-img", "image-background", "background-image", "bg-image"],
+        answerIndex: 2,
+        type: "css"
+      },
+
+      {
+        q: "What is the correct HTML element for inserting a video?",
+        options: ["<video>", "<media>", "<movie>", "<mp4>"],
+        answerIndex: 0,
+        type: "html"
+      },
+      {
+        q: "Which CSS property is used to make a rounded border?",
+        options: ["border-round", "radius-border", "border-radius", "border-style: round"],
+        answerIndex: 2,
+        type: "css"
+      },
+
+      {
+        q: "Which HTML element is used to play audio files?",
+        options: ["<sound>", "<mp3>", "<audio>", "<music>"],
+        answerIndex: 2,
+        type: "html"
+      },
+      {
+        q: "Which CSS property controls the spacing between lines of text?",
+        options: ["line-spacing", "letter-spacing", "line-height", "text-spacing"],
+        answerIndex: 2,
+        type: "css"
+      },
+
+      {
+        q: "Which tag is used to define an ordered list?",
+        options: ["<ul>", "<ol>", "<li>", "<list>"],
+        answerIndex: 1,
+        type: "html"
+      },
+      {
+        q: "Which CSS property is used to remove underlines from links?",
+        options: ["text-decoration: none", "underline: none", "text-underline: remove", "link-style: none"],
+        answerIndex: 0,
+        type: "css"
+      },
+
+      {
+        q: "Which tag is used to define internal CSS?",
+        options: ["<css>", "<style>", "<script>", "<link>"],
+        answerIndex: 1,
+        type: "html"
+      },
+      {
+        q: "Which tag is used to define a horizontal line in HTML?",
+        options: ["<hr>", "<line>", "<br>", "<hline>"],
+        answerIndex: 0,
+        type: "css"
+      },
+
+      {
+        q: "Which tag is used to create a footer in semantic HTML?",
+        options: ["<div>", "<bottom>", "<footer>", "<section>"],
+        answerIndex: 2,
+        type: "html"
+      },
+      {
+        q: "Which CSS property is used to set the border color of an element?",
+        options: ["border-color", "color-border", "border-clr", "border-style-color"],
+        answerIndex: 0,
+        type: "css"
+      },
+
+      {
+        q: "Which tag is used to define navigation links in semantic HTML?",
+        options: ["<nav>", "<menu>", "<navigation>", "<links>"],
+        answerIndex: 0,
+        type: "html"
+      },
+      {
+        q: "Which CSS property is used to set the transparency of an element?",
+        options: ["transparency", "alpha", "opacity", "filter"],
+        answerIndex: 2,
+        type: "css"
+      },
+
+      {
+        q: "Which element is used to group related content in a section?",
+        options: ["<group>", "<div>", "<section>", "<article>"],
+        answerIndex: 2,
+        type: "html"
+      },
+      {
+        q: "Which CSS property is used to set the minimum width of an element?",
+        options: ["min-width", "width-min", "smallest-width", "min-w"],
+        answerIndex: 0,
+        type: "css"
+      },
+
+      {
+        q: "Which tag is used to create a text input field in a form?",
+        options: ["<text>", "<input type=\"text\">", "<textarea>", "<field>"],
+        answerIndex: 1,
+        type: "html"
+      },
+      {
+        q: "Which CSS property controls the order of stacked elements (z-axis)?",
+        options: ["stack-order", "z-index", "layer-order", "position-order"],
+        answerIndex: 1,
+        type: "css"
+      },
+
+      {
+        q: "Which attribute is required in the <img> tag?",
+        options: ["src and alt", "src only", "alt only", "width and height"],
+        answerIndex: 0,
+        type: "html"
+      },
+      {
+        q: "Which CSS property is used to set the height of an element?",
+        options: ["h", "height", "size-height", "high"],
+        answerIndex: 1,
+        type: "css"
+      },
+
+      // Keep the quiz size reasonable but still covers fundamentals.
+      // (Your pasted list includes many duplicates and repeated ranges; this page is deduplicated and shortened.)
+    ];
+  </script>
+
+  <script src="./app.js"></script>
+</body>
+</html>
